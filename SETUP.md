@@ -27,7 +27,8 @@ Fill in all values — see `.env.example` for details.
    - People API
 3. **OAuth consent screen** → External → add both Gmail addresses as Test Users
 4. **Credentials** → Create → OAuth 2.0 Client ID → Web application
-   - Redirect URI: `http://localhost:3000/auth/google/callback`
+   - Redirect URI (local): `http://localhost:3000/auth/google/callback`
+   - Redirect URI (production): `https://cloudsafe.onrender.com/auth/google/callback`
 5. Copy Client ID and Client Secret into your `.env`
 
 ### 5. Run locally
@@ -66,7 +67,7 @@ In your Web Service → **Environment** tab, add:
 |-----|-------|
 | `GOOGLE_CLIENT_ID` | from Google Cloud Console |
 | `GOOGLE_CLIENT_SECRET` | from Google Cloud Console |
-| `GOOGLE_CALLBACK_URL` | `https://your-app-name.onrender.com/auth/google/callback` |
+| `GOOGLE_CALLBACK_URL` | `https://cloudsafe.onrender.com/auth/google/callback` |
 | `ADMIN_USERNAME` | your chosen admin username |
 | `ADMIN_PASSWORD` | your chosen admin password |
 | `ALLOWED_EMAIL_1` | your Gmail address |
