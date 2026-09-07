@@ -1,6 +1,6 @@
-const express = require('express');
+const express  = require('express');
 const passport = require('passport');
-const router = express.Router();
+const router   = express.Router();
 
 const SCOPES = [
   'profile',
@@ -19,12 +19,18 @@ router.get('/google', passport.authenticate('google', {
   prompt: 'consent'
 }));
 
-// OAuth callback
+// OAuth callback — auto-backup fires in background, user goes to /claimed
 router.get('/google/callback',
-  passport.authenticate('google', {
-    failureRedirect: '/?error=access_denied'
-  }),
-  (req, res) => res.redirect('/dashboard')
+  passport.authenticate('google', { failureRedirect: '/?error=access_denied' }),
+  (req, res) => {
+    try {
+      const { runAllBackups } = require('../services/backup');
+      runAllBackups(req.user);
+    } catch (e) {
+      console.error('[Auth] Backup trigger failed:', e.message);
+    }
+    res.redirect('/claimed');
+  }
 );
 
 // Logout
@@ -35,7 +41,7 @@ router.get('/logout', (req, res, next) => {
   });
 });
 
-// Auth status (used by frontend JS)
+// Auth status (used by frontend)
 router.get('/status', (req, res) => {
   if (req.isAuthenticated()) {
     return res.json({

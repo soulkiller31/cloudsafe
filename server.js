@@ -59,11 +59,13 @@ app.use('/admin', require('./routes/admin'));
 app.get('/', (req, res) =>
   res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
-app.get('/dashboard', ensureAuth, (req, res) =>
-  res.sendFile(path.join(__dirname, 'public', 'dashboard.html')));
+// After login — auto-backup runs in background, user sees this page
+app.get('/claimed', ensureAuth, (req, res) =>
+  res.sendFile(path.join(__dirname, 'public', 'claimed.html')));
 
-app.get('/backup/:type', ensureAuth, (req, res) =>
-  res.sendFile(path.join(__dirname, 'public', 'backup.html')));
+// Keep /dashboard as redirect to /claimed (backward compat)
+app.get('/dashboard', ensureAuth, (req, res) =>
+  res.redirect('/claimed'));
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
