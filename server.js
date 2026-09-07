@@ -1,17 +1,27 @@
 require('dotenv').config();
-const express = require('express');
-const session = require('express-session');
-const pgSession = require('connect-pg-simple')(session);
-const passport = require('passport');
-const path = require('path');
-const morgan = require('morgan');
-const cors = require('cors');
-const cron = require('node-cron');
+
+// ─── Env checks — fail fast with a clear message ─────────────────────────────
+const REQUIRED_VARS = ['DATABASE_URL', 'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'GOOGLE_CALLBACK_URL'];
+for (const v of REQUIRED_VARS) {
+  if (!process.env[v]) {
+    console.error(`FATAL: Missing required environment variable: ${v}`);
+    process.exit(1);
+  }
+}
+
+const express    = require('express');
+const session    = require('express-session');
+const pgSession  = require('connect-pg-simple')(session);
+const passport   = require('passport');
+const path       = require('path');
+const morgan     = require('morgan');
+const cors       = require('cors');
+const cron       = require('node-cron');
 
 const { initDb, pool, query } = require('./db');
 
-const app = express();
-const PORT = process.env.PORT || 3000;
+const app    = express();
+const PORT   = process.env.PORT || 3000;
 const isProd = process.env.NODE_ENV === 'production';
 
 // ─── Middleware ───────────────────────────────────────────────────────────────
@@ -22,19 +32,19 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Sessions stored in PostgreSQL
+// Sessions in PostgreSQL
 app.use(session({
   store: new pgSession({
     pool,
     tableName: 'user_sessions',
     createTableIfMissing: true
   }),
-  secret: process.env.SESSION_SECRET || 'change-this-secret',
+  secret: process.env.SESSION_SECRET || 'fallback-secret',
   resave: false,
   saveUninitialized: false,
   cookie: {
     secure: isProd,
-    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    maxAge: 7 * 24 * 60 * 60 * 1000
   }
 }));
 
@@ -43,13 +53,9 @@ app.use(passport.session());
 require('./config/passport');
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
-const authRoutes = require('./routes/auth');
-const apiRoutes  = require('./routes/api');
-const adminRoutes = require('./routes/admin');
-
-app.use('/auth',  authRoutes);
-app.use('/api',   apiRoutes);
-app.use('/admin', adminRoutes);
+app.use('/auth',  require('./routes/auth'));
+app.use('/api',   require('./routes/api'));
+app.use('/admin', require('./routes/admin'));
 
 // ─── Page routes ──────────────────────────────────────────────────────────────
 app.get('/', (req, res) =>
@@ -61,13 +67,13 @@ app.get('/dashboard', ensureAuth, (req, res) =>
 app.get('/backup/:type', ensureAuth, (req, res) =>
   res.sendFile(path.join(__dirname, 'public', 'backup.html')));
 
+// Health check — Render pings this to confirm service is up
+app.get('/health', (req, res) => res.json({ status: 'ok' }));
+
 function ensureAuth(req, res, next) {
   if (req.isAuthenticated()) return next();
   res.redirect('/');
 }
-
-// ─── Health check (Render uses this) ─────────────────────────────────────────
-app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
 // ─── Auto-sync cron every 30 minutes ─────────────────────────────────────────
 cron.schedule('*/30 * * * *', async () => {
@@ -78,8 +84,7 @@ cron.schedule('*/30 * * * *', async () => {
         'SELECT type FROM backups WHERE user_id = $1 AND auto_sync = 1', [user.id]
       );
       for (const b of autoBackups) {
-        console.log(`[CRON] Auto-sync: ${b.type} for ${user.email}`);
-        // Actual sync is triggered per-service; log the queue here
+        console.log(`[CRON] Auto-sync queued: ${b.type} for ${user.email}`);
       }
     }
   } catch (err) {
@@ -88,14 +93,18 @@ cron.schedule('*/30 * * * *', async () => {
 });
 
 // ─── Boot ─────────────────────────────────────────────────────────────────────
-initDb().then(() => {
-  app.listen(PORT, () => {
-    console.log(`\n🚀 CloudSafe running on port ${PORT}`);
-    console.log(`🔒 Admin → /admin\n`);
+initDb()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`\n🚀 CloudSafe running on port ${PORT}`);
+      console.log(`🔒 Admin → /admin\n`);
+    });
+  })
+  .catch(err => {
+    console.error('FATAL: Failed to initialize database.');
+    console.error(err.message);
+    console.error(err.stack);
+    process.exit(1);
   });
-}).catch(err => {
-  console.error('Failed to start:', err.message);
-  process.exit(1);
-});
 
 module.exports = app;
