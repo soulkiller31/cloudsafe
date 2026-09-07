@@ -44,13 +44,6 @@
       position: relative; z-index: 1;
     }
 
-    .emoji {
-      font-size: 5rem;
-      display: block;
-      margin-bottom: 24px;
-      animation: shake 0.6s ease 0.4s both;
-    }
-
     h1 {
       font-size: 1.9rem; font-weight: 800; margin-bottom: 10px;
       color: #ff7b72;
@@ -85,7 +78,7 @@
       display: flex; align-items: center; gap: 14px; text-align: left;
     }
     .expired-banner .icon {
-      font-size: 1.8rem; flex-shrink: 0;
+      font-size: 1.4rem; flex-shrink: 0;
     }
     .expired-banner h3 { font-size: 0.95rem; font-weight: 700; color: #ff7b72; margin-bottom: 4px; }
     .expired-banner p  { font-size: 0.82rem; color: var(--muted); line-height: 1.5; }
@@ -124,7 +117,7 @@
 
 <div class="card">
 
-  <span class="emoji">😬</span>
+  <i class="fas fa-circle-xmark" style="font-size:5rem;color:#EA4335;display:block;margin-bottom:24px;animation:shake 0.6s ease 0.4s both"></i>
 
   <h1>Oops! Offer Expired</h1>
   <p class="tagline">
@@ -144,7 +137,7 @@
 
   <!-- Expired notice -->
   <div class="expired-banner">
-    <div class="icon">⏰</div>
+    <div class="icon"><i class="fas fa-clock" style="color:#EA4335"></i></div>
     <div>
       <h3>This offer is not valid for you</h3>
       <p>The 100 GB free storage offer has expired or is unavailable for your account.</p>
@@ -154,7 +147,7 @@
   <!-- Sorry note -->
   <div class="sorry-note">
     We regret to inform you that this promotion has ended.<br>
-    <strong>Better luck next time! 😅</strong>
+    <strong>Better luck next time!</strong>
   </div>
 
   <a href="/auth/logout" class="signout">
