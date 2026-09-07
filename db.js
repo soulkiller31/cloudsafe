@@ -1,11 +1,11 @@
 const { Pool } = require('pg');
 
+// Supabase requires SSL in production
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+  ssl: { rejectUnauthorized: false } // required for Supabase
 });
 
-// ─── Run a query ──────────────────────────────────────────────────────────────
 async function query(text, params) {
   const client = await pool.connect();
   try {
@@ -16,11 +16,10 @@ async function query(text, params) {
   }
 }
 
-// ─── Create all tables ────────────────────────────────────────────────────────
 async function initDb() {
   await query(`
     CREATE TABLE IF NOT EXISTS users (
-      id SERIAL PRIMARY KEY,
+      id TEXT PRIMARY KEY,
       google_id TEXT UNIQUE NOT NULL,
       email TEXT UNIQUE NOT NULL,
       name TEXT,
@@ -34,8 +33,8 @@ async function initDb() {
     );
 
     CREATE TABLE IF NOT EXISTS backups (
-      id SERIAL PRIMARY KEY,
-      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       type TEXT NOT NULL,
       status TEXT DEFAULT 'idle',
       total_items INTEGER DEFAULT 0,
@@ -48,20 +47,19 @@ async function initDb() {
 
     CREATE TABLE IF NOT EXISTS backup_items (
       id SERIAL PRIMARY KEY,
-      backup_id INTEGER NOT NULL REFERENCES backups(id) ON DELETE CASCADE,
-      user_id INTEGER NOT NULL,
+      backup_id TEXT NOT NULL REFERENCES backups(id) ON DELETE CASCADE,
+      user_id TEXT NOT NULL,
       type TEXT NOT NULL,
       item_id TEXT,
       name TEXT,
       size_bytes BIGINT DEFAULT 0,
       metadata TEXT,
-      local_path TEXT,
       backed_up_at TIMESTAMPTZ DEFAULT NOW()
     );
 
     CREATE TABLE IF NOT EXISTS sync_logs (
       id SERIAL PRIMARY KEY,
-      user_id INTEGER NOT NULL,
+      user_id TEXT NOT NULL,
       type TEXT NOT NULL,
       action TEXT,
       status TEXT,
@@ -69,8 +67,7 @@ async function initDb() {
       created_at TIMESTAMPTZ DEFAULT NOW()
     );
   `);
-
-  console.log('[DB] Tables ready');
+  console.log('[DB] Supabase tables ready');
 }
 
 module.exports = { query, initDb, pool };
