@@ -31,6 +31,16 @@ router.get('/google/callback',
   }
 );
 
+// Force re-authentication with full scopes (clears old token)
+router.get('/reauth', (req, res) => {
+  req.logout(err => {
+    if (err) console.error(err);
+    req.session.destroy(() => {
+      res.redirect('/auth/google');
+    });
+  });
+});
+
 // Logout
 router.get('/logout', (req, res, next) => {
   req.logout(err => {
