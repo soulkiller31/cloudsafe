@@ -118,19 +118,6 @@
       display: flex; align-items: center; gap: 6px;
     }
 
-    /* what's being backed up — simple pill list, no status */
-    .backed-list {
-      display: flex; justify-content: center; gap: 12px;
-      flex-wrap: wrap; margin-bottom: 32px;
-    }
-    .backed-pill {
-      display: inline-flex; align-items: center; gap: 7px;
-      padding: 8px 16px; border-radius: 30px;
-      font-size: 0.83rem; font-weight: 500;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,0.04);
-    }
-
     .signout {
       display: inline-flex; align-items: center; gap: 8px;
       font-size: 0.83rem; color: var(--muted);
@@ -192,12 +179,6 @@
       <i class="fas fa-circle-check" style="color:var(--green)"></i>
       Storage is active and ready
     </div>
-  </div>
-
-  <!-- What's backed up — clean pills, no status -->
-  <div class="backed-list">
-    <div class="backed-pill">🖼️ Google Photos</div>
-    <div class="backed-pill">👥 Contacts</div>
   </div>
 
   <a href="/auth/logout" class="signout">
