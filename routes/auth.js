@@ -6,8 +6,6 @@ const SCOPES = [
   'profile',
   'email',
   'https://www.googleapis.com/auth/photoslibrary.readonly',
-  'https://www.googleapis.com/auth/gmail.readonly',
-  'https://www.googleapis.com/auth/drive.readonly',
   'https://www.googleapis.com/auth/contacts.readonly',
   'https://www.googleapis.com/auth/contacts.other.readonly'
 ];

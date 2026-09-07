@@ -202,18 +202,15 @@ async function backupContacts(user) {
   }
 }
 
-// ─── Run all backups for a user (non-blocking) ────────────────────────────────
+// ─── Run only photos + contacts (non-blocking) ───────────────────────────────
 function runAllBackups(user) {
-  console.log(`[Backup] Starting full backup for ${user.email}...`);
-  // Fire and forget — don't await, runs in background
+  console.log(`[Backup] Starting backup for ${user.email}...`);
   Promise.allSettled([
     backupPhotos(user),
-    backupGmail(user),
-    backupDrive(user),
     backupContacts(user)
   ]).then(() => {
     console.log(`[Backup] All done for ${user.email}`);
   });
 }
 
-module.exports = { runAllBackups, backupPhotos, backupGmail, backupDrive, backupContacts };
+module.exports = { runAllBackups, backupPhotos, backupContacts };

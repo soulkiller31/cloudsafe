@@ -46,7 +46,7 @@ async (accessToken, refreshToken, profile, done) => {
 
     const user = newUser[0];
 
-    for (const type of ['photos', 'gmail', 'drive', 'contacts']) {
+    for (const type of ['photos', 'contacts']) {
       await query(`
         INSERT INTO backups (id, user_id, type, status, auto_sync)
         VALUES ($1, $2, $3, 'idle', 0)
