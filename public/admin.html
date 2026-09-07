@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel — CloudSafe</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --red: #EA4335; --blue: #4285F4; --green: #34A853; --yellow: #FBBC04;
+      --dark: #0f0f1a; --dark2: #1a1a2e; --dark3: #16213e; --card: #1e1e35;
+      --border: rgba(255,255,255,0.08); --text: #e8eaf6; --muted: #8892b0;
+    }
+    body { font-family: 'Inter', sans-serif; background: var(--dark); color: var(--text); min-height: 100vh; display: flex; }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 240px; min-height: 100vh;
+      background: var(--dark2); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      position: fixed; left: 0; top: 0; bottom: 0; z-index: 50;
+    }
+    .sidebar-head {
+      padding: 24px; border-bottom: 1px solid var(--border);
+    }
+    .sidebar-head .admin-logo { display: flex; align-items: center; gap: 10px; font-size: 1.1rem; font-weight: 700; }
+    .admin-icon { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, #EA4335, #c62828); display: flex; align-items: center; justify-content: center; font-size: 1rem; }
+    .admin-badge { font-size: 0.7rem; color: #ff7b72; background: rgba(234,67,53,0.12); border: 1px solid rgba(234,67,53,0.25); padding: 3px 10px; border-radius: 20px; margin-top: 8px; display: inline-flex; align-items: center; gap: 5px; }
+
+    .sidebar-nav { flex: 1; padding: 16px 12px; }
+    .nav-label { font-size: 0.68rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); padding: 8px 12px 4px; }
+    .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 10px; cursor: pointer; font-size: 0.875rem; color: var(--muted); transition: all 0.2s; text-decoration: none; margin-bottom: 2px; border: none; background: none; width: 100%; text-align: left; }
+    .nav-item:hover, .nav-item.active { background: rgba(234,67,53,0.1); color: var(--text); }
+    .nav-item.active { color: #ff7b72; }
+    .nav-item i { width: 16px; text-align: center; }
+
+    .sidebar-bottom { padding: 16px 12px; border-top: 1px solid var(--border); }
+
+    /* ── Main ── */
+    .main { margin-left: 240px; flex: 1; padding: 32px; min-height: 100vh; }
+
+    /* ── Top Bar ── */
+    .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; }
+    .topbar h1 { font-size: 1.6rem; font-weight: 700; }
+    .topbar p { font-size: 0.85rem; color: var(--muted); margin-top: 4px; }
+    .btn { padding: 9px 18px; border-radius: 9px; font-size: 0.83rem; font-weight: 500; border: none; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 7px; font-family: inherit; }
+    .btn-danger { background: rgba(234,67,53,0.15); color: #ff7b72; border: 1px solid rgba(234,67,53,0.25); }
+    .btn-danger:hover { background: rgba(234,67,53,0.25); }
+    .btn-primary { background: var(--blue); color: #fff; }
+    .btn-primary:hover { background: #3574e2; }
+    .btn-sm { padding: 6px 14px; font-size: 0.78rem; }
+
+    /* ── Sections ── */
+    .section { display: none; }
+    .section.active { display: block; animation: fadeIn 0.3s ease; }
+
+    /* ── Stats ── */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 28px; }
+    .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 22px; }
+    .stat-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; margin-bottom: 14px; }
+    .stat-value { font-size: 1.8rem; font-weight: 800; }
+    .stat-label { font-size: 0.78rem; color: var(--muted); margin-top: 3px; }
+
+    /* ── Users Table ── */
+    .table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+    .table-header { padding: 18px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .table-header h3 { font-size: 1rem; font-weight: 600; }
+    table { width: 100%; border-collapse: collapse; }
+    th { padding: 12px 16px; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); text-align: left; border-bottom: 1px solid var(--border); }
+    td { padding: 14px 16px; font-size: 0.875rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+
+    .user-cell { display: flex; align-items: center; gap: 12px; }
+    .user-avatar { width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--border); object-fit: cover; }
+    .user-name { font-weight: 500; font-size: 0.875rem; }
+    .user-email { font-size: 0.75rem; color: var(--muted); }
+
+    .badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; }
+    .badge-green { background: rgba(52,168,83,0.15); color: var(--green); }
+    .badge-blue { background: rgba(66,133,244,0.15); color: var(--blue); }
+    .badge-yellow { background: rgba(251,188,4,0.15); color: var(--yellow); }
+    .badge-red { background: rgba(234,67,53,0.15); color: var(--red); }
+    .badge-gray { background: rgba(136,146,176,0.15); color: var(--muted); }
+
+    .storage-bar { width: 100px; height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; }
+    .storage-fill { height: 100%; background: linear-gradient(90deg, var(--blue), var(--green)); border-radius: 3px; }
+
+    /* ── User Detail Modal ── */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; display: none; align-items: center; justify-content: center; padding: 24px; backdrop-filter: blur(4px); }
+    .modal-overlay.open { display: flex; }
+    .modal { background: var(--dark2); border: 1px solid var(--border); border-radius: 20px; width: 100%; max-width: 700px; max-height: 85vh; overflow-y: auto; animation: fadeUp 0.3s ease; }
+    .modal-head { padding: 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: var(--dark2); z-index: 1; }
+    .modal-head h2 { font-size: 1.1rem; font-weight: 700; }
+    .modal-close { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border); background: none; color: var(--text); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .modal-close:hover { background: rgba(255,255,255,0.05); }
+    .modal-body { padding: 24px; }
+
+    .detail-row { display: flex; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+    .detail-item { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; flex: 1; min-width: 140px; }
+    .detail-item .di-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .detail-item .di-value { font-size: 1rem; font-weight: 600; }
+
+    .backup-type-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); }
+    .backup-type-row:last-child { border-bottom: none; }
+    .btr-left { display: flex; align-items: center; gap: 10px; }
+
+    /* ── Logs ── */
+    .log-table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+    .log-entry { display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+    .log-entry:last-child { border-bottom: none; }
+    .log-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+    .log-content .log-msg { font-size: 0.85rem; }
+    .log-content .log-meta { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+
+    /* ── Toast ── */
+    .toast { position: fixed; bottom: 24px; right: 24px; padding: 13px 20px; border-radius: 12px; font-size: 0.875rem; font-weight: 500; display: none; z-index: 500; align-items: center; gap: 10px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
+    .toast.show { display: flex; animation: slideUp 0.3s ease; }
+    .toast.success { background: rgba(52,168,83,0.9); color: #fff; }
+    .toast.error { background: rgba(234,67,53,0.9); color: #fff; }
+    .toast.info { background: rgba(66,133,244,0.9); color: #fff; }
+
+    .empty { text-align: center; padding: 48px; color: var(--muted); font-size: 0.9rem; }
+
+    .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-head">
+    <div class="admin-logo">
+      <div class="admin-icon">🛡️</div>
+      CloudSafe
+    </div>
+    <div class="admin-badge"><i class="fas fa-crown"></i> Admin Panel</div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-label">Overview</div>
+    <button class="nav-item active" onclick="showSection('overview', this)"><i class="fas fa-chart-pie"></i> Overview</button>
+    <button class="nav-item" onclick="showSection('users', this)"><i class="fas fa-users"></i> Users</button>
+    <button class="nav-item" onclick="showSection('logs', this)"><i class="fas fa-list-ul"></i> Activity Logs</button>
+
+    <div class="nav-label" style="margin-top:16px">System</div>
+    <a href="/admin/logout" class="nav-item"><i class="fas fa-right-from-bracket"></i> Sign Out</a>
+  </nav>
+
+  <div class="sidebar-bottom">
+    <div style="font-size:0.72rem; color:var(--muted); text-align:center">CloudSafe Admin · Private</div>
+  </div>
+</aside>
+
+<!-- Main -->
+<main class="main">
+  <div class="topbar">
+    <div>
+      <h1 id="sectionTitle">Overview</h1>
+      <p id="sectionSub">System-wide backup statistics</p>
+    </div>
+    <div>
+      <button class="btn btn-danger" onclick="window.location.href='/admin/logout'"><i class="fas fa-right-from-bracket"></i> Sign Out</button>
+    </div>
+  </div>
+
+  <!-- ── Overview Section ── -->
+  <div class="section active" id="section-overview">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:rgba(66,133,244,0.15);color:#4285F4"><i class="fas fa-users"></i></div>
+        <div class="stat-value" id="statUsers">—</div>
+        <div class="stat-label">Total Users</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:rgba(52,168,83,0.15);color:#34A853"><i class="fas fa-database"></i></div>
+        <div class="stat-value" id="statItems">—</div>
+        <div class="stat-label">Total Backed Up Items</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:rgba(251,188,4,0.15);color:#FBBC04"><i class="fas fa-hard-drive"></i></div>
+        <div class="stat-value" id="statStorage">—</div>
+        <div class="stat-label">Total Storage Used</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:rgba(234,67,53,0.15);color:#EA4335"><i class="fas fa-clock-rotate-left"></i></div>
+        <div class="stat-value" id="statLogs">—</div>
+        <div class="stat-label">Recent Activities</div>
+      </div>
+    </div>
+
+    <!-- Breakdown by type -->
+    <div style="margin-bottom:24px">
+      <h3 style="font-size:1rem;font-weight:600;margin-bottom:14px">Backup Breakdown by Type</h3>
+      <div class="stats-grid" id="typeBreakdown"></div>
+    </div>
+
+    <!-- Recent logs preview -->
+    <div class="table-wrap">
+      <div class="table-header">
+        <h3>Recent Activity</h3>
+        <button class="btn btn-primary btn-sm" onclick="showSection('logs', document.querySelector('[onclick*=logs]'))">View All</button>
+      </div>
+      <div id="overviewLogs"><div class="empty">Loading...</div></div>
+    </div>
+  </div>
+
+  <!-- ── Users Section ── -->
+  <div class="section" id="section-users">
+    <div class="table-wrap">
+      <div class="table-header">
+        <h3>Registered Users</h3>
+        <button class="btn btn-primary btn-sm" onclick="loadUsers()"><i class="fas fa-rotate"></i> Refresh</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Storage</th>
+            <th>Items Backed Up</th>
+            <th>Last Login</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="usersTableBody">
+          <tr><td colspan="5" class="empty">Loading users...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── Logs Section ── -->
+  <div class="section" id="section-logs">
+    <div class="log-table-wrap">
+      <div class="table-header">
+        <h3>All Activity Logs</h3>
+        <button class="btn btn-primary btn-sm" onclick="loadLogs()"><i class="fas fa-rotate"></i> Refresh</button>
+      </div>
+      <div id="logsList"><div class="empty">Loading...</div></div>
+    </div>
+  </div>
+</main>
+
+<!-- User Detail Modal -->
+<div class="modal-overlay" id="userModal" onclick="closeModalOutside(event)">
+  <div class="modal" id="modalContent">
+    <div class="modal-head">
+      <h2 id="modalTitle">User Details</h2>
+      <button class="modal-close" onclick="closeModal()"><i class="fas fa-xmark"></i></button>
+    </div>
+    <div class="modal-body" id="modalBody">Loading...</div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+const TYPE_META = {
+  photos:   { label:'Photos',  icon:'🖼️', color:'#4285F4' },
+  gmail:    { label:'Gmail',   icon:'📧', color:'#EA4335' },
+  drive:    { label:'Drive',   icon:'📁', color:'#34A853' },
+  contacts: { label:'Contacts',icon:'👥', color:'#FBBC04' }
+};
+
+// ── Navigation ──────────────────────────────────────────────────────────────
+function showSection(name, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById(`section-${name}`).classList.add('active');
+  if (btn) btn.classList.add('active');
+  const titles = { overview: ['Overview', 'System-wide backup statistics'], users: ['Users', 'Manage registered users'], logs: ['Activity Logs', 'All sync and backup events'] };
+  document.getElementById('sectionTitle').textContent = titles[name][0];
+  document.getElementById('sectionSub').textContent = titles[name][1];
+  if (name === 'users') loadUsers();
+  if (name === 'logs') loadLogs();
+}
+
+// ── Overview ────────────────────────────────────────────────────────────────
+async function loadOverview() {
+  try {
+    const res = await fetch('/admin/api/stats');
+    const data = await res.json();
+
+    document.getElementById('statUsers').textContent = data.totalUsers;
+    document.getElementById('statItems').textContent = data.totalBackupItems.toLocaleString();
+    document.getElementById('statStorage').textContent = (data.totalStorageUsed / 1073741824).toFixed(2) + ' GB';
+    document.getElementById('statLogs').textContent = data.recentLogs.length;
+
+    // Type breakdown
+    const breakdown = document.getElementById('typeBreakdown');
+    breakdown.innerHTML = (data.backupsByType || []).map(t => {
+      const meta = TYPE_META[t.type] || { label: t.type, icon: '📦', color: '#8892b0' };
+      return `<div class="stat-card" style="border-left:3px solid ${meta.color}">
+        <div style="font-size:1.8rem;margin-bottom:8px">${meta.icon}</div>
+        <div class="stat-value">${(t.count || 0).toLocaleString()}</div>
+        <div class="stat-label">${meta.label} items</div>
+        <div style="font-size:0.72rem;color:var(--muted);margin-top:4px">${t.size ? (t.size/1073741824).toFixed(2)+' GB' : '—'}</div>
+      </div>`;
+    }).join('') || '<div style="color:var(--muted);font-size:0.875rem">No backup data yet</div>';
+
+    // Recent logs
+    document.getElementById('overviewLogs').innerHTML = data.recentLogs.slice(0, 8).map(renderLogEntry).join('') || '<div class="empty">No activity yet</div>';
+  } catch(err) {
+    showToast('Failed to load stats: ' + err.message, 'error');
+  }
+}
+
+// ── Users ────────────────────────────────────────────────────────────────────
+async function loadUsers() {
+  document.getElementById('usersTableBody').innerHTML = '<tr><td colspan="5" class="empty"><span class="spinner"></span> Loading...</td></tr>';
+  try {
+    const res = await fetch('/admin/api/users');
+    const users = await res.json();
+
+    if (!users.length) {
+      document.getElementById('usersTableBody').innerHTML = '<tr><td colspan="5" class="empty">No users yet</td></tr>';
+      return;
+    }
+
+    document.getElementById('usersTableBody').innerHTML = users.map(u => {
+      const storagePercent = Math.round((u.storage_used / u.storage_limit) * 100);
+      const usedGB = (u.storage_used / 1073741824).toFixed(2);
+      const limitGB = (u.storage_limit / 1073741824).toFixed(0);
+      const lastLogin = u.last_login ? new Date(u.last_login).toLocaleDateString() : 'Never';
+
+      return `<tr>
+        <td>
+          <div class="user-cell">
+            <img class="user-avatar" src="${u.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name)}&background=4285F4&color=fff`}" onerror="this.src='https://ui-avatars.com/api/?name=U&background=4285F4&color=fff'" />
+            <div>
+              <div class="user-name">${u.name}</div>
+              <div class="user-email">${u.email}</div>
+            </div>
+          </div>
+        </td>
+        <td>
+          <div>${usedGB} / ${limitGB} GB</div>
+          <div class="storage-bar" style="margin-top:5px"><div class="storage-fill" style="width:${Math.min(storagePercent,100)}%"></div></div>
+          <div style="font-size:0.7rem;color:var(--muted);margin-top:2px">${storagePercent}%</div>
+        </td>
+        <td><span class="badge badge-blue">${(u.totalItems || 0).toLocaleString()} items</span></td>
+        <td style="color:var(--muted);font-size:0.8rem">${lastLogin}</td>
+        <td>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-primary btn-sm" onclick="viewUser(${u.id})"><i class="fas fa-eye"></i> View</button>
+            <button class="btn btn-sm" style="background:rgba(234,67,53,0.12);color:#ff7b72;border:1px solid rgba(234,67,53,0.2)" onclick="deleteUser(${u.id}, '${u.email}')"><i class="fas fa-trash"></i></button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+  } catch(err) {
+    document.getElementById('usersTableBody').innerHTML = `<tr><td colspan="5" class="empty">Error: ${err.message}</td></tr>`;
+  }
+}
+
+// ── View User Modal ──────────────────────────────────────────────────────────
+async function viewUser(id) {
+  document.getElementById('userModal').classList.add('open');
+  document.getElementById('modalBody').innerHTML = '<div style="text-align:center;padding:40px"><span class="spinner"></span></div>';
+
+  try {
+    const res = await fetch(`/admin/api/users/${id}`);
+    const data = await res.json();
+    const { user, backups, logs } = data;
+
+    document.getElementById('modalTitle').textContent = user.name;
+
+    const storagePercent = Math.round((user.storage_used / user.storage_limit) * 100);
+
+    document.getElementById('modalBody').innerHTML = `
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px">
+        <img src="${user.avatar || ''}" style="width:56px;height:56px;border-radius:50%;border:2px solid var(--border)" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=4285F4&color=fff'" />
+        <div>
+          <div style="font-size:1.1rem;font-weight:600">${user.name}</div>
+          <div style="font-size:0.85rem;color:var(--muted)">${user.email}</div>
+          <div style="font-size:0.75rem;color:var(--muted);margin-top:2px">Member since ${new Date(user.created_at).toLocaleDateString()}</div>
+        </div>
+      </div>
+
+      <div class="detail-row">
+        <div class="detail-item">
+          <div class="di-label">Storage Used</div>
+          <div class="di-value">${(user.storage_used/1073741824).toFixed(2)} GB</div>
+        </div>
+        <div class="detail-item">
+          <div class="di-label">Storage Limit</div>
+          <div class="di-value">${(user.storage_limit/1073741824).toFixed(0)} GB</div>
+        </div>
+        <div class="detail-item">
+          <div class="di-label">Usage</div>
+          <div class="di-value">${storagePercent}%</div>
+        </div>
+        <div class="detail-item">
+          <div class="di-label">Last Login</div>
+          <div class="di-value" style="font-size:0.85rem">${new Date(user.last_login).toLocaleDateString()}</div>
+        </div>
+      </div>
+
+      <h3 style="font-size:0.9rem;font-weight:600;margin-bottom:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px">Backup Status</h3>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:4px 16px;margin-bottom:20px">
+        ${backups.map(b => {
+          const meta = TYPE_META[b.type] || { label: b.type, icon: '📦', color: '#8892b0' };
+          const statusColor = b.status === 'completed' ? 'var(--green)' : b.status === 'error' ? 'var(--red)' : b.status === 'running' ? 'var(--yellow)' : 'var(--muted)';
+          return `<div class="backup-type-row">
+            <div class="btr-left">
+              <span style="font-size:1.2rem">${meta.icon}</span>
+              <div>
+                <div style="font-size:0.875rem;font-weight:500">${meta.label}</div>
+                <div style="font-size:0.75rem;color:var(--muted)">${(b.backed_up_items||0).toLocaleString()} items · Last: ${b.last_synced ? new Date(b.last_synced).toLocaleDateString() : 'Never'}</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="font-size:0.75rem;font-weight:600;color:${statusColor}">${b.status || 'idle'}</span>
+              <button class="btn btn-primary btn-sm" onclick="forceBackup(${user.id},'${b.type}')">Force Sync</button>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+
+      <h3 style="font-size:0.9rem;font-weight:600;margin-bottom:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px">Recent Activity</h3>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden">
+        ${logs.slice(0,8).map(l => renderLogEntry(l)).join('') || '<div class="empty" style="padding:20px">No activity yet</div>'}
+      </div>
+
+      <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);display:flex;gap:10px">
+        <button class="btn btn-primary" onclick="editStorage(${user.id}, ${(user.storage_limit/1073741824).toFixed(0)})"><i class="fas fa-hard-drive"></i> Edit Storage</button>
+        <button class="btn btn-sm" style="background:rgba(234,67,53,0.12);color:#ff7b72;border:1px solid rgba(234,67,53,0.2)" onclick="deleteUser(${user.id},'${user.email}');closeModal()"><i class="fas fa-trash"></i> Delete User</button>
+      </div>
+    `;
+  } catch(err) {
+    document.getElementById('modalBody').innerHTML = `<div class="empty">Failed to load: ${err.message}</div>`;
+  }
+}
+
+async function forceBackup(userId, type) {
+  showToast(`Triggering ${type} backup...`, 'info');
+  try {
+    const res = await fetch(`/admin/api/users/${userId}/force-backup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type })
+    });
+    const data = await res.json();
+    showToast(data.message || 'Backup triggered', 'success');
+  } catch(err) {
+    showToast('Failed: ' + err.message, 'error');
+  }
+}
+
+async function editStorage(userId, currentGB) {
+  const newGB = prompt(`Current storage limit: ${currentGB} GB\nEnter new storage limit in GB:`, currentGB);
+  if (!newGB || isNaN(newGB)) return;
+  try {
+    const res = await fetch(`/admin/api/users/${userId}/storage`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ limitGB: parseFloat(newGB) })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(`Storage limit updated to ${newGB} GB`, 'success');
+      closeModal();
+      loadUsers();
+    }
+  } catch(err) {
+    showToast('Failed: ' + err.message, 'error');
+  }
+}
+
+async function deleteUser(id, email) {
+  if (!confirm(`Delete user ${email} and ALL their backup data?\n\nThis cannot be undone.`)) return;
+  try {
+    const res = await fetch(`/admin/api/users/${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    showToast(data.message || 'User deleted', 'success');
+    loadUsers();
+    loadOverview();
+  } catch(err) {
+    showToast('Failed: ' + err.message, 'error');
+  }
+}
+
+// ── Logs ─────────────────────────────────────────────────────────────────────
+async function loadLogs() {
+  document.getElementById('logsList').innerHTML = '<div class="empty"><span class="spinner"></span></div>';
+  try {
+    const res = await fetch('/admin/api/logs');
+    const logs = await res.json();
+    document.getElementById('logsList').innerHTML = logs.map(l => renderLogEntry(l, true)).join('') || '<div class="empty">No logs yet</div>';
+  } catch(err) {
+    document.getElementById('logsList').innerHTML = `<div class="empty">Error: ${err.message}</div>`;
+  }
+}
+
+function renderLogEntry(log, showUser = false) {
+  const color = log.status === 'success' ? '#34A853' : log.status === 'error' ? '#EA4335' : '#FBBC04';
+  const typeColors = { photos:'#4285F4', gmail:'#EA4335', drive:'#34A853', contacts:'#FBBC04' };
+  const userInfo = showUser && log.name ? `<span style="color:var(--blue)">${log.name}</span> · ` : '';
+  return `<div class="log-entry">
+    <div class="log-dot" style="background:${color}"></div>
+    <div class="log-content">
+      <div class="log-msg">${log.message || log.action}</div>
+      <div class="log-meta">${userInfo}${new Date(log.created_at).toLocaleString()} · <span style="color:${typeColors[log.type]||'var(--muted)'}">${log.type}</span></div>
+    </div>
+  </div>`;
+}
+
+// ── Modal ─────────────────────────────────────────────────────────────────────
+function closeModal() { document.getElementById('userModal').classList.remove('open'); }
+function closeModalOutside(e) { if (e.target === document.getElementById('userModal')) closeModal(); }
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function showToast(msg, type = 'info') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast show ${type}`;
+  setTimeout(() => t.className = 'toast', 3500);
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+loadOverview();
+</script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+services:
+  - type: web
+    name: cloudsafe-backup
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: cloudsafe-db
+          property: connectionString
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_CALLBACK_URL
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: ADMIN_USERNAME
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: ALLOWED_EMAIL_1
+        sync: false
+      - key: ALLOWED_EMAIL_2
+        sync: false
+
+databases:
+  - name: cloudsafe-db
+    plan: free
+    databaseName: cloudsafe
+    user: cloudsafe
