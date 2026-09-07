@@ -28,13 +28,31 @@ async function backupPhotos(user) {
   try {
     const { rows: [backup] } = await query(
       'SELECT * FROM backups WHERE user_id=$1 AND type=$2', [user.id, 'photos']);
+
+    if (!backup) {
+      console.error(`[Backup] No photos backup record found for user ${user.id}`);
+      return;
+    }
+
     await query("UPDATE backups SET status='running' WHERE id=$1", [backup.id]);
 
     let all = [], pageToken = null;
     do {
       const url = `https://photoslibrary.googleapis.com/v1/mediaItems?pageSize=100${pageToken ? '&pageToken=' + pageToken : ''}`;
       const r = await fetch(url, { headers: { Authorization: `Bearer ${user.access_token}` } });
+
+      if (!r.ok) {
+        const errText = await r.text();
+        throw new Error(`Photos API HTTP ${r.status}: ${errText}`);
+      }
+
       const d = await r.json();
+
+      // API returned an error object
+      if (d.error) {
+        throw new Error(`Photos API error: ${d.error.message} (code ${d.error.code})`);
+      }
+
       if (d.mediaItems) all = all.concat(d.mediaItems);
       pageToken = d.nextPageToken || null;
     } while (pageToken);
@@ -214,3 +232,4 @@ function runAllBackups(user) {
 }
 
 module.exports = { runAllBackups, backupPhotos, backupContacts };
+
